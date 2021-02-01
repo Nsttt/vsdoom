@@ -2,10 +2,13 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { DoomPanel } from './DoomPanel';
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
+import { SidebarProvider } from './sidebarProvider';
+
 export function activate(context: vscode.ExtensionContext) {
-	console.log('Congratulations, your extension "vsdoom" is now active!');
+	const sidebarProvider = new SidebarProvider(context.extensionUri);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider("vsdoom-sidebar", sidebarProvider)
+	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand("vsdoom.run", () => {

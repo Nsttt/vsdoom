@@ -64,19 +64,6 @@ export class DoomPanel {
     // Listen for when the panel is disposed
     // This happens when the user closes the panel or when the panel is closed programatically
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
-
-    // // Handle messages from the webview
-    // this._panel.webview.onDidReceiveMessage(
-    //   (message) => {
-    //     switch (message.command) {
-    //       case "alert":
-    //         vscode.window.showErrorMessage(message.text);
-    //         return;
-    //     }
-    //   },
-    //   null,
-    //   this._disposables
-    // );
   }
 
   public dispose() {
@@ -113,20 +100,14 @@ export class DoomPanel {
           vscode.window.showErrorMessage(data.value);
           break;
         }
-        // case "tokens": {
-        //   await Util.globalState.update(accessTokenKey, data.accessToken);
-        //   await Util.globalState.update(refreshTokenKey, data.refreshToken);
-        //   break;
-        // }
       }
     });
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
-    // // And the uri we use to load this script in the webview
-    // const scriptUri = webview.asWebviewUri(
-    //   vscode.Uri.joinPath(this._extensionUri, "out", "compiled/swiper.js")
-    // );
+    const scriptUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, "out/compiled", "Doom.js")
+    );
 
     // Local path to css styles
     const styleResetPath = vscode.Uri.joinPath(
@@ -143,12 +124,9 @@ export class DoomPanel {
     // Uri to load styles into webview
     const stylesResetUri = webview.asWebviewUri(styleResetPath);
     const stylesMainUri = webview.asWebviewUri(stylesPathMainPath);
-    const cssUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "out", "compiled/swiper.css")
-    );
 
     // Use a nonce to only allow specific scripts to be run
-    // const nonce = getNonce();
+    const nonce = getNonce();
 
     return `<!DOCTYPE html>
 			<html lang="en">
@@ -158,30 +136,16 @@ export class DoomPanel {
 					Use a content security policy to only allow loading images from https or from our extension directory,
 					and only allow scripts that have a specific nonce.
         -->
-        <meta http-equiv="Content-Security-Policy" content="img-src https: data:; style-src 'unsafe-inline' ${webview.cspSource}; ">
+        <meta http-equiv="Content-Security-Policy" content="img-src https: data:; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}'; ">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<link href="${stylesResetUri}" rel="stylesheet">
 				<link href="${stylesMainUri}" rel="stylesheet">
-        <link href="${cssUri}" rel="stylesheet">
+        <script nonce="${nonce}">
+        </script>
 			</head>
       <body>
-      <div id="dosbox"></div>
-           <br/>
-           <button onclick="dosbox.requestFullScreen();">Make fullscreen</button>
-           
-           <script type="text/javascript" src="https://js-dos.com/cdn/js-dos-api.js"></script>
-           <script type="text/javascript">
-             var dosbox = new Dosbox({
-              id: "dosbox",
-               onload: function (dosbox) {
-                 dosbox.run("upload/DOOM-@evilution.zip", "./doom");
-               },
-              onrun: function (dosbox, app) {
-               console.log("App '" + app + "' is runned");
-               }
-             });
-           </script>
-			</body>
+      </body>
+      <script src="${scriptUri}" nonce="${nonce}"
 			</html>`;
   }
 }
